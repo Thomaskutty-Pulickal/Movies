@@ -1,0 +1,33 @@
+body{
+	background-color:#99ffff;
+	background-image: url("https://images.unsplash.com/photo-1516979187457-637abb4f9353?ixlib=rb-1.2.1&auto=format&fit=crop&w=4050&q=80");
+	background-repeat: no-repeat;
+	background-position: center;
+	background-size: cover;
+}
+html{
+	height: 100%;
+}
+.divs{
+align-items: center;
+text-align: center;
+margin: 0 auto;
+margin-top: 23%;
+animation-name: content;
+animation-duration: 2s;
+}
+.heading{
+	text-align: center;
+	color: #4d4d4d;
+}
+.line{
+	width: 300px;
+}
+@keyframes content{
+	from{
+		width: 0%;
+	}
+	to{
+		width: 100%;
+	}
+}

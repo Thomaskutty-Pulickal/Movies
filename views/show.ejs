@@ -1,0 +1,20 @@
+<% include partials/header.ejs %>
+<div class="container">
+  <h2 class="title"><%= foundMovie.name %> </h2>
+  <p><%= foundMovie.year %> </p>
+  <div class="row">
+    <div class="col-sm-6">
+       <img  class="img-thumbnail imageshow" src="<%= foundMovie.image %>" alt="The picture goes here">
+    </div>
+    <div class="col-sm-6">
+        <br>
+        <br>
+        <p class="showtext">              <span class="showspan">Director:</span> <%= foundMovie.director %></p>
+        <br>
+        <p class="showtext">              <span class="showspan">Actors:</span> <%= foundMovie.actors %></p>
+         <br>
+        <p class="showtext">              <span class="showspan">About:</span> <%= foundMovie.about %></p>
+    </div>
+  </div>
+</div>
+<% include partials/footer.ejs %>
