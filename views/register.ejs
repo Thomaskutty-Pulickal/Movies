@@ -1,0 +1,14 @@
+<% include partials/header.ejs %>
+	<div class="container logincontainer">
+	        <form class="loginform" action="/index/register" method="POST">
+	             <div class="input-group mb-3">
+	                <input class="logininput" type="text" name="username" placeholder="Username">
+	             </div>
+	             <div class="input-group mb-3">
+	                <input class="logininput" type="text" name="password" placeholder="password">
+	             </div>
+	                <button type="submit" class="btn btn-success btn-medium">Login</button>
+	                <a href="/index/login">Already a user </a>
+	        </form>
+	</div>
+<% include partials/footer.ejs %>
