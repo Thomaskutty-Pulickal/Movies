@@ -16,5 +16,22 @@
         <p class="showtext">              <span class="showspan">About:</span> <%= foundMovie.about %></p>
     </div>
   </div>
+    <div class="container commentcontainer">
+        <div class="row formcontainer">
+                <form class="formclass" action="/index/<%= foundMovie._id %>" method="POST">
+                     <div class="input-group mb-3">
+                        <input class="form-control forminput" type="text" name="review" placeholder="Add new comment">
+                        <button type="submit" class="btn btn-secondary btn-medium">Submit Review</button>
+                     </div>
+                </form>
+                <% foundMovie.comments.forEach(function(review){ %>
+                      <div class="container commentcontent">
+                          <p class="commentparagraph"><span class="authornameclass"><%= review.author %> :</span> 
+                                <%= review.content %></p>
+                      </div>
+                <% }); %>
+        </div>
+    </div>
+    
 </div>
 <% include partials/footer.ejs %>
