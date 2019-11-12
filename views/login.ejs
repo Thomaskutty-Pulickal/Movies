@@ -1,11 +1,12 @@
 <% include partials/header.ejs %>
 	<div class="container logincontainer">
+	        <% include partials/messages.ejs %>
 	        <form class="loginform" action="/index/login" method="POST">
 	             <div class="input-group mb-3">
 	                <input class="logininput" type="text" name="username" placeholder="Username">
 	             </div>
 	             <div class="input-group mb-3">
-	                <input class="logininput" type="text" name="password" placeholder="password">
+	                <input class="logininput" type="password" name="password" placeholder="password">
 	             </div>
 	                <button type="submit" class="btn btn-success btn-medium">Login</button>
 	        </form>
