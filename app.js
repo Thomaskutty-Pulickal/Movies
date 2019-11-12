@@ -5,13 +5,13 @@ const bodyParser = require("body-parser");
 const comment = require("./models/commentschema.js");
 const movie = require("./models/movieschema.js");
 const seedDB = require("./models/seed.js");
-const user = require("./models/user.js");
+const User = require("./models/user.js");
 const passport = require("passport");
 const LocalStrategy = require("passport-local").Strategy;
 const passportLocalMongoose = require("passport-local-mongoose");
 const session = require("express-session");
 const bcrypt = require("bcryptjs");
-const port = process.env.PORT || 3000;
+var errors = [];
 
 mongoose.connect("mongodb://localhost/test",{useNewUrlParser: true,useUnifiedTopology: true});
 
@@ -27,33 +27,36 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 
-passport.use(new LocalStrategy(
+passport.use(new LocalStrategy({usernameField:'username'},
   function(username, password, done) {
-    user.findOne({ username: username }, function (err, founduser) {
+    User.findOne({ username: username }, function (err, founduser) {
       if (err) { return done(err); }
       if (!founduser) {
         return done(null, false, { message: 'Incorrect username.' });
       }
-      if (!founduser.validPassword(password)) {
-        return done(null, false, { message: 'Incorrect password.' });
-      }
-      return done(null, user);
+      bcrypt.compare(password,founduser.password,function(err,isMatch){
+      	if(err){
+      		console.log(err);
+      	}
+      	if(isMatch){
+      		return done(null,founduser);
+      	}
+      	else{
+      		return done(null,false,{message:'password incorrect'});
+      	}
+      });
     });
   }
 ));
 
-passport.serializeUser(function(req, user, done) {  //encrypt
-    done(null, user.user_id);
+passport.serializeUser(function(user, done) {
+  done(null, user.id);
 });
 
-
-
-passport.deserializeUser(function(user_id, done) {  // decrytp
-    getUserInfo(user_id).then(function(user) {
-        return done(null, user);
-    }, function(err) {
-        return done(err,null);
-    });
+passport.deserializeUser(function(id, done) {
+  User.findById(id, function(err, user) {
+    done(err, user);
+  });
 });
 // const Strategy = LocalStrategy.Strategy; 
 // passport.use(new Strategy(user.authenticate())); 
@@ -61,7 +64,7 @@ passport.deserializeUser(function(user_id, done) {  // decrytp
 //=================================
 
 app.use(bodyParser.urlencoded({extended: true}));
-// seedDB();
+seedDB();
 app.use(express.static("private"));
 
 app.get("/",function(req,res){
@@ -97,7 +100,7 @@ app.get("/index",function(req,res){
 });
 
 app.get("/index/register",function(req,res){
-	res.render("register.ejs");
+	res.render("register.ejs",{errors:errors});
 });
 
 //=================
@@ -105,23 +108,58 @@ app.get("/index/register",function(req,res){
 //==================
 
 app.post("/index/register",function(req,res){
-	if ((req.body.username == null) || (req.body.password == null)){
+	if ((req.body.username.length < 5) || (req.body.password.length < 5)){
 		// return res.redirect("/index/register");
-		return res.redirect("/index/register");
+		errors.push("Use appropriate credentials");
+		res.render("register.ejs",{errors:errors});
 	}
 	else{
-		return res.send("login is gonna come soon......");
+		const newUser = new User({username:req.body.username,password:req.body.password});
+		User.findOne({username:newUser.username},function(err,user){
+			if(err){
+				console.log(err);
+			}
+			if(user){
+				errors.push('The username already taken');
+				return res.render('register.ejs',{errors:errors});
+			}
+			if(!user){
+				bcrypt.genSalt(10, function(err, salt){
+					bcrypt.hash(req.body.password,salt,function(err,hash){
+						newUser.password = hash;
+						newUser.save(function(newerr,result){
+							if(newerr){
+								console.log(err);
+							}
+							else{
+								errors.push("successfully regestered you can now login");
+								return res.redirect("/index/login");
+							}
+						});
+					});
+				});
+			}
+		});
 		
 	}
 });
 
 app.get("/index/login",function(req,res){
-	res.render("login.ejs");
+	res.render("login.ejs",{errors:errors});
 });
 
-app.post("/index/login",function(req,res){
-		return res.send("login is gonna come soon.............");
+app.post("/index/login",function(req,res,next){
+        passport.authenticate("local",{
+		successRedirect:"/index",
+		failureRedirect:"/index/login"
+	    })(req,res,next);
 });
+
+app.get("/index/logout",function(req,res){
+	req.logout();
+	res.redirect("/index");
+});
+
 //===================
 //show
 //===================
@@ -135,9 +173,10 @@ app.get("/index/:id",function(req,res){
 	});
 });
 
-app.post("/index/:id",function(req,res){
+app.post("/index/:id",isLoggedIn,function(req,res){
 	// res.redirect("/index/"+String(req.params.id));
 	const comment1 = new comment({
+		author:req.user.username,
 		content:req.body.review
 	});
 	comment1.save(function(err,newreview){
@@ -145,6 +184,7 @@ app.post("/index/:id",function(req,res){
 			console.log(err);
 		}
 		else{
+			console.log(newreview);
 			movie.findById(req.params.id,function(err,founMovie){
 				if(err){
 					console.log("Something went wrong");
@@ -156,6 +196,7 @@ app.post("/index/:id",function(req,res){
 			        		console.log(err);
 			        	}
 			        	else{
+			        		console.log(data);
 			        		return res.redirect("/index/"+String(req.params.id));
 			        	}
 			        });
@@ -170,6 +211,15 @@ function escapeRegex(text) {
     return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
 };
 
-app.listen(port,function(){
-		console.log("server is listening")
-});
+function isLoggedIn(req,res,next){
+	if(req.isAuthenticated()){
+		return next();
+	}
+	else{
+		console.log("login first");
+		return res.redirect("/index/login");
+	}
+}
+
+app.listen(3000,console.log("server is listening"));
+
