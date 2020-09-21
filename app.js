@@ -19,7 +19,7 @@ mongoose.connect("mongodb://localhost/test",{useNewUrlParser: true,useUnifiedTop
 // passport setup
 
 app.use(session({
-	secret:"This is me you bitch",
+	secret:"This is me",
 	resave:false,
 	saveUninitialized:false
 }));
